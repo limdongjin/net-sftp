@@ -64,13 +64,21 @@ module Net; module SFTP
       session.pending_requests.key?(id)
     end
 
-    # Waits (blocks) until the server responds to this packet. If prior
-    # SFTP packets were also pending, they will be processed as well (since
-    # SFTP packets are processed in the order in which they are received by
-    # the server). Returns the request object itself.
-    def wait
+    # Waits until the server responds to this packet. When the underlying
+    # Net::SSH session uses a Fiber-aware event loop, this cooperates with the
+    # current Fiber scheduler instead of blocking the entire thread in IO.select.
+    # Returns the request object itself.
+    def await
       session.loop { pending? }
       self
+    end
+
+    # Waits until the server responds to this packet. If prior SFTP packets were
+    # also pending, they will be processed as well (since SFTP packets are
+    # processed in the order in which they are received by the server). Returns
+    # the request object itself.
+    def wait
+      await
     end
 
     public # but not "published". Internal use only
