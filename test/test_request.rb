@@ -27,6 +27,15 @@ class RequestTest < Net::SFTP::TestCase
     assert_equal 4, session.loops
   end
 
+  def test_await_should_run_loop_while_pending_and_return_self
+    session = MockSession.new
+    request = Net::SFTP::Request.new(session, :open, 1)
+    request.expects(:pending?).times(4).returns(true, true, true, false)
+    assert_equal 0, session.loops
+    assert_equal request, request.await
+    assert_equal 4, session.loops
+  end
+
   def test_respond_to_should_set_response_property
     packet = stub("packet", :type => 1)
     session = stub("session", :protocol => mock("protocol"))
